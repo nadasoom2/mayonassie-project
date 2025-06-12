@@ -3,13 +3,13 @@ from flask import Blueprint, request, jsonify, render_template, session
 from datetime import datetime
 from gpt_utils import analyze_emotions_with_gpt, extract_emotion_scores
 import sqlite3
-import openai
+from openai import OpenAI
 
 # Blueprint 객체 생성
 autodiary_bp = Blueprint('autodiary', __name__, template_folder='templates')
 
 # OpenAI API 키 설정
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @autodiary_bp.route("/api/has_survey", methods=["GET"])
 def has_survey():
@@ -63,7 +63,7 @@ def generate_autodiary():
     """
 
     try:
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
@@ -133,7 +133,7 @@ def next_question():
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
