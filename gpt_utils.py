@@ -2,10 +2,12 @@
 
 import openai  # 상단 import에 추가
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # GPT API 키는 환경 변수 또는 직접 문자열로 설정 가능
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # GPT 분석 함수
 # GPT 분석 함수 (None 반환 포함)
@@ -86,7 +88,7 @@ def analyze_emotions_with_gpt(survey_row, column_names):
     # GPT 호출
     try:
         import openai
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
