@@ -74,7 +74,7 @@ def chat_api():
     emotion_context = session.get("emotion_summary", "사용자의 감정 상태는 확인되지 않았습니다.")
 
     try:
-        response = openai.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
                 {
