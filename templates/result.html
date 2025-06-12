@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>마요네즈 설문 결과</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #fff8e1;
+      font-family: 'Gowun Dodum', sans-serif;
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ffb300;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .btn-group {
+      margin-top: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .btn-group button {
+      padding: 14px 28px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      color: white;
+      font-family: 'Gowun Dodum', sans-serif;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+
+    .btn-group button:hover {
+      transform: translateY(-3px);
+    }
+
+    #restartBtn { background-color: #ffcc80; }
+    #aiChatBtn { background-color: #81c784; }
+    #matchBtn { background-color: #64b5f6; }
+    #autoDiaryBtn { background-color: #4caf50; }
+
+    /* 뒤로가기 버튼튼 */
+    .back-circle {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #ffcc80;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .back-circle:hover {
+      background: #ffa726;
+    } 
+  </style>
+</head>
+<body>
+  <a href="/home" class="back-circle">←</a>
+  <h1>설문 결과 요약</h1>
+
+  <div class="summary">
+    <canvas id="emotionChart" width="400" height="300"></canvas>
+
+    <div id="gptSummary" style="margin-top:20px; font-size: 1.1rem; color: #444;">
+      AI 분석 결과를 불러오는 중입니다...
+    </div>
+
+    <div class="btn-group">
+      <button id="aiChatBtn">AI 감정 대화 시작하기</button>
+      <button id="autoDiaryBtn">자동 일기 쓰러 가기</button>
+      <button id="restartBtn">다시 설문하기</button>
+    </div>
+  </div>
+
+  <script>
+    window.onload = async function () {
+      try {
+        const res = await fetch("/gpt_summary");
+        if (!res.ok) throw new Error("서버 오류");
+
+        const json = await res.json();
+        const emotionScores = json.scores || {};
+
+        // GPT 분석 텍스트 표시
+        document.getElementById("gptSummary").innerText =
+          json.summary || "❌ 분석 결과가 없습니다.";
+
+        // 차트 그리기
+        const ctx = document.getElementById('emotionChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(emotionScores),
+            datasets: [{
+              label: '감정 강도',
+              data: Object.values(emotionScores),
+              backgroundColor: [
+                '#ff8a65','#ba68c8','#4dd0e1','#81d4fa','#aed581',
+                '#f06292','#ffd54f','#aed581','#90caf9','#ffb74d'
+              ]
+            }]
+          },
+          options: {
+            scales: {
+              y: { beginAtZero: true, max: 5 }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("GPT 요약 실패:", err);
+        document.getElementById("gptSummary").innerText =
+          "❌ GPT 분석 결과를 불러올 수 없습니다.";
+      }
+    };
+
+    document.getElementById("restartBtn").onclick = () => {
+      window.location.href = "/survey";
+    };
+    document.getElementById("aiChatBtn").onclick = () => {
+      window.location.href = "/chat";
+    };
+    document.getElementById("autoDiaryBtn").onclick = () => {
+      window.location.href = "/autodiary";
+    };
+  </script>
+</body>
+</html>

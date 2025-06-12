@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>자동 일기 생성</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #fffaf0;
+      font-family: 'Gowun Dodum', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    .chat-header {
+      background: linear-gradient(to right, #ffcc80, #ffb74d);
+      color: #5d4037;
+      padding: 20px;
+      font-size: 1.6rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    .chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #fffef3;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 250px);
+      gap: 10px;
+    }
+    .message {
+      max-width: 75%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.5;
+      word-break: break-word;
+      font-size: 1rem;
+    }
+    .user {
+      background-color: #ffcc80;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+    .ai {
+      background-color: #f5f5f5;
+      color: #333;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+    .input-area {
+      display: flex;
+      padding: 16px;
+      background: #fff;
+      border-top: 1px solid #eee;
+    }
+    textarea {
+      flex: 1;
+      font-size: 1rem;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      resize: none;
+      height: 48px;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+    button {
+      margin-left: 12px;
+      padding: 0 20px;
+      background: #ffcc80;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Gowun Dodum', sans-serif;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #ffa726;
+    }
+    #previewModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    #previewBox {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 90%;
+    }
+    #previewBox textarea {
+      width: 100%;
+      height: 300px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      padding: 12px;
+      font-size: 1rem;
+      font-family: 'Gowun Dodum', sans-serif;
+      resize: vertical;
+    }
+    .modal-actions {
+      text-align: right;
+      margin-top: 12px;
+    }
+
+    /* 진행상황 바 */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background-color: #ffe0b2;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #ff9800;
+      transition: width 0.3s ease;
+    }
+
+    /* 뒤로가기 버튼튼 */
+    .back-circle {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #ffcc80;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .back-circle:hover {
+      background: #ffa726;
+    } 
+  </style>
+</head>
+<body>
+  <a href="/result" class="back-circle">←</a>
+  <div class="chat-container">
+    <div class="chat-header">일기 생성 AI</div>
+    <div class="progress-container">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="chat-box" id="chatBox"></div>
+    
+    <div class="input-area">
+      <textarea id="userInput" placeholder="답변을 입력해주세요..."></textarea>
+      <button onclick="sendMessage()">전송</button>
+      <button onclick="generateDiary()">일기 완성하기</button>
+    </div>
+  </div>
+
+  <div id="previewModal">
+    <div id="previewBox">
+      <h3>📝 생성된 일기 미리보기</h3>
+      <textarea id="diaryPreview"></textarea>
+      <div class="modal-actions">
+        <button onclick="saveDiary()" style="background:#4caf50;">저장</button>
+        <button onclick="retryDiary()" style="background:#ccc;">다시 생성</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- 자동일기 설명 팝업 -->
+    <div id="introModal" style="display: flex; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 9999;">
+      <div style="background: white; padding: 30px 25px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; font-family: 'Gowun Dodum', sans-serif;">
+        <h2 style="margin-top: 0; color: #ff9800;">📔 자동 일기 생성 안내</h2>
+        <p style="font-size: 1rem; margin-bottom: 20px;">
+          오늘 하루 있었던 일을 차분히 떠올리며<br/>
+          AI와 편하게 대화를 나눠보세요.<br/><br/>
+          대화를 충분히 나눈 뒤,<br/>
+          <strong>“일기 완성하기”</strong> 버튼을 누르면<br/>
+          당신만의 감성 일기가 완성됩니다!
+        </p>
+        <button onclick="closeIntroModal()" style="padding: 10px 20px; background: #ffb74d; border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: bold;">시작하기</button>
+      </div>
+    </div>
+
+  <script>
+    const chatBox = document.getElementById('chatBox');
+    const input = document.getElementById('userInput');
+    let fullConversation = "";
+    let count = 0;
+
+    function appendMessage(sender, text) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + sender;
+      msg.innerText = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function goToAutoDiaryWithConversation() {
+      fetch('/generate_autodiary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})  // chat_history는 session에서 가져가므로 비워도 OK
+      })
+      .then(res => res.json())
+      .then(data => {
+        // 일기 미리보기에 표시
+        document.getElementById('diaryPreview').value = data.diary || '일기 생성 실패';
+        document.getElementById('previewModal').style.display = 'flex';
+      })
+      .catch(err => {
+        alert('❌ 일기 생성 중 오류 발생');
+        console.error(err);
+      });
+    }
+
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage('user', text);
+      fullConversation += `너: ${text}\n`;
+      input.value = '';
+      count++;
+
+      fetch('/next_question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ previousAnswer: text, conversation: fullConversation })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.done) {
+          appendMessage('ai', '좋아, 이제 너의 하루를 바탕으로 일기를 써볼게!');
+          generateDiary();
+        } else if (data.question) {
+          appendMessage('ai', data.question);
+        }
+      });
+    }
+
+
+    function generateDiary() {
+      fetch('/generate_autodiary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversation: fullConversation })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('diaryPreview').value = data.diary || '일기 생성 실패';
+        document.getElementById('previewModal').style.display = 'flex'; // ✅ 팝업 열기!
+      })
+      .catch(() => {
+        alert('❌ 일기를 생성하는 중 오류가 발생했어요.');
+      });
+    }
+
+
+    window.onload = () => {
+      const mode = "{{ mode }}";  // Jinja에서 전달됨: "chat" 또는 "survey"
+
+      if (mode === "chat") {
+        // chat 기반 자동일기
+        appendMessage('ai', '우리 아까 나눈 이야기들, 일기로 정리해볼까?');
+        setTimeout(() => {
+          document.getElementById('userInput').disabled = true;
+          document.querySelector(".input-area").style.display = "none";
+          goToAutoDiaryWithConversation();  // chat history 기반 자동 일기 생성 함수
+        }, 1000);
+      } else {
+        // survey 기반 자동일기
+        setTimeout(() => {
+          document.getElementById('surveyIntroModal').style.display = 'flex';
+        }, 300); // 0.3초 후 자동 팝업
+
+        appendMessage('ai', '안녕! 오늘 하루의 감정을 담은 일기를 함께 써보자 :)');
+        setTimeout(() => {
+          appendMessage('ai', '오늘 하루 어땠어?');  // 첫 질문은 고정
+        }, 1000);
+      }
+    };
+
+
+
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function skipQuestion() {
+      answers.push({ question: questions[currentIndex], answer: '' });
+      updateProgressBar(); // update 바
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        appendMessage('ai', '다음 질문으로 넘어갈게요...');
+        setTimeout(askQuestion, 500);
+      } else {
+        generateAutoDiary();
+      }
+    }
+
+    function saveDiary() {
+      const content = document.getElementById('diaryPreview').value;
+      fetch('/autodiary_complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      })
+      .then(() => {
+        alert('일기가 저장되었습니다!');
+        window.location.href = '/diary';
+      })
+      .catch(() => {
+        alert('❌ 저장 실패');
+      });
+    }
+
+    function retryDiary() {
+      document.getElementById('previewModal').style.display = 'none';
+      fullConversation = "";
+      count = 0;
+      chatBox.innerHTML = '';
+      appendMessage('ai', '다시 시작해볼까? 오늘 하루 어땠어?');
+    }
+
+
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function closeIntroModal() {
+      document.getElementById('introModal').style.display = 'none';
+    }
+
+  </script>
+
+</body>
+</html>

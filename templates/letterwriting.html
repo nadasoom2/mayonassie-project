@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>편지쓰기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Gowun Dodum', sans-serif;
+      background-color: #fffdf7;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 300px;
+      background-color: #fff3cd;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      overflow-y: auto;
+    }
+
+    .sidebar h2 {
+      font-size: 20px;
+      color: #856404;
+      margin-bottom: 10px;
+    }
+
+    .letter-item {
+      background-color: #fff8e1;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .letter-item:hover {
+      background-color: #ffe082;
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .main h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #5d4037;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-sizing: border-box;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    textarea {
+      height: 200px;
+      resize: vertical;
+    }
+
+    button {
+      background-color: #ffa000;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: 'Gowun Dodum', sans-serif;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #fb8c00;
+    }
+
+    #charCount {
+      text-align: right;
+      font-size: 14px;
+      color: #888;
+      margin-top: 5px;
+    }
+
+    .back-circle {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #ffcc80;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s;
+      text-decoration: none;
+    }
+
+    .back-circle:hover {
+      background-color: #ffa726;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff8e1;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 400px;
+      max-width: 90%;
+      display: none;
+      z-index: 1000;
+    }
+
+    .popup h3 {
+      margin-top: 0;
+      color: #5d4037;
+    }
+
+    .popup .popup-content {
+      margin-bottom: 15px;
+    }
+
+    .popup .close-btn {
+      background-color: #ffca28; /* 부드러운 노란색 */
+      color: #5d4037;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .popup .close-btn:hover {
+      background-color: #ffb300; /* 약간 더 진한 노란색 */
+    }
+
+    .popup .reply-btn {
+      background-color: #90caf9; /* 부드러운 연한 파란색 */
+      color: #0d47a1;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+
+    .popup .reply-btn:hover {
+      background-color: #64b5f6; /* 약간 진한 연파랑 */
+    }
+  </style>
+</head>
+<body>
+<a href="/home" class="back-circle">←</a>
+<div class="container">
+  <div class="sidebar">
+    <div style="margin-top: 50px;"><h2>📬 받은 편지함</h2>
+      <button id="get-today-letter" onclick="getExtraLetter()" style="font-size: 12px; padding: 6px 10px; margin-bottom: 20px;">랜덤 편지 더 받기 (1코인 소모)</button>
+    </div>
+    <div id="letter-list"></div>
+  </div>
+
+  <div class="main">
+    <h2>✉️ 편지 쓰기</h2>
+    <div class="form-group">
+      <label for="emotion">감정 선택</label>
+      <select id="emotion">
+        <option value="기쁨">😊 기쁨</option>
+        <option value="외로움">😔 외로움</option>
+        <option value="불안">😰 불안</option>
+        <option value="감동">🥹 감동</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="title">제목</label>
+      <input type="text" id="title" placeholder="편지 제목을 적어주세요" />
+    </div>
+    <div class="form-group">
+      <label for="content">내용</label>
+      <textarea id="content" placeholder="당신의 마음을 담아주세요..." maxlength="300"></textarea>
+      <div id="charCount">0 / 300자</div>
+    </div>
+    <button onclick="submitLetter()">익명으로 보내기</button>
+  </div>
+</div>
+
+<div class="popup" id="letterPopup">
+  <h3 id="popupTitle"></h3>
+  <div class="popup-content" id="popupContent"></div>
+  <div class="popup-content" id="popupEmotion"></div>
+  <div class="popup-content" id="popupSender"></div>
+  <button class="close-btn" onclick="closePopup()">닫기</button>
+  <button class="reply-btn" onclick="reportLetter()" style="background-color: #e53935;">신고하기</button>
+</div>
+
+<!-- 편지쓰기 안내 팝업 -->
+<div id="letterIntroModal" style="display: flex; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background: white; padding: 30px 25px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; font-family: 'Gowun Dodum', sans-serif;">
+    <h2 style="margin-top: 0; color: #ff9800;">💌 편지 작성 안내</h2>
+    <p style="font-size: 1rem; margin-bottom: 20px; line-height: 1.6;">
+      이 편지는 <strong>실제 다른 사용자가 읽게 되는 글</strong>이에요.<br/>
+      상대방이 <strong>따뜻한 감정</strong>을 느낄 수 있도록,<br/>
+      <strong>비속어나 공격적인 표현은 피해 주세요.</strong><br/><br/>
+      서로의 하루에 <strong>작은 위로가 될 수 있는</strong><br/>
+      편지를 함께 만들어가요 😊
+    </p>
+
+    <label style="display: block; margin-bottom: 20px; font-size: 0.95rem;">
+      <input type="checkbox" id="agreeCheckbox" style="margin-right: 6px;" />
+      위 내용을 이해하고 동의합니다
+    </label>
+
+    <button onclick="confirmAgreement()" style="padding: 10px 20px; background: #ffb74d; border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: bold;">시작하기</button>
+  </div>
+</div>
+
+
+<script>
+  let currentLetterId = null;
+
+  window.onload = () => {
+    // 기존 받은 편지 불러오기
+    fetch("/letter/received")
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(letter => {
+          appendLetterToSidebar(letter);
+        });
+      });
+
+    // 편지 작성 잠금
+    const textarea = document.getElementById('content');
+    if (textarea) {
+      textarea.disabled = true;
+      textarea.placeholder = "✋ 안내에 동의해야 작성할 수 있어요.";
+    }
+  };
+
+  function confirmAgreement() {
+    const checkbox = document.getElementById('agreeCheckbox');
+    if (!checkbox.checked) {
+      alert("안내 내용을 읽고 동의해주세요!");
+      return;
+    }
+
+    // 팝업 닫기
+    document.getElementById('letterIntroModal').style.display = 'none';
+
+    // 글쓰기 잠금 해제
+    const textarea = document.getElementById('content');
+    if (textarea) {
+      textarea.disabled = false;
+      textarea.placeholder = "상대방이 보고 기분 좋아질 수 있도록 따뜻한 말을 적어주세요 :)";
+    }
+  }
+
+
+  function submitLetter() {
+    const content = document.getElementById("content").value;
+    const title = document.getElementById("title").value;
+    const emotion = document.getElementById("emotion").value;
+
+    if (!title.trim() || !content.trim()) {
+      alert("제목과 내용을 모두 입력해주세요.");
+      return;
+    }
+
+    fetch("/letter/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, content, emotion })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("편지가 성공적으로 전송되었습니다!");
+
+          document.getElementById("emotion").value = "기쁨"; // 초기 감정값
+          document.getElementById("title").value = "";
+          document.getElementById("content").value = "";
+          document.getElementById("charCount").textContent = "0 / 300자";
+          
+        // 하루 중 첫 편지일 때만 랜덤 편지 확인
+        if (data.first_time_today) {
+          const wantsToReceive = confirm("다른 사람의 편지를 랜덤으로 받아보시겠어요?");
+          if (wantsToReceive) {
+            receiveRandomLetter();
+          }
+        }
+        } else {
+          alert("전송 실패: " + data.message);
+        }
+      });
+  }
+
+  function receiveRandomLetter(paid = true) {
+    fetch("/letter/random?paid=" + (paid ? "true" : "false"), {
+      method: "POST",
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          if (data.error === "코인이 부족합니다") {
+            alert("코인이 부족합니다. 충전 페이지로 이동합니다.");
+            window.location.href = "/buy-coins";
+          } else {
+            console.log(data);
+          }
+          return;
+        }
+        appendLetterToSidebar(data);
+      });
+  }
+
+
+
+  function getExtraLetter() {
+    receiveRandomLetter();
+  }
+
+  function appendLetterToSidebar(letter) {
+    const list = document.getElementById("letter-list");
+    const item = document.createElement("div");
+    item.className = "letter-item";
+    item.textContent = `[익명] ${letter.title}`;
+    item.onclick = () => openPopup(letter);
+    list.appendChild(item);
+  }
+
+  function openPopup(letter) {
+    currentLetterId = letter.id;
+    document.getElementById("popupTitle").textContent = letter.title;
+    document.getElementById("popupContent").textContent = letter.content;
+    document.getElementById("popupEmotion").textContent = `감정: ${letter.emotion}`;
+    document.getElementById("popupSender").textContent = `보낸이 ID: ${letter.userid}`;
+    document.getElementById("letterPopup").style.display = "block";
+  }
+
+  function closePopup() {
+    document.getElementById("letterPopup").style.display = "none";
+  }
+
+  document.getElementById("content").addEventListener("input", function () {
+    const length = this.value.length;
+    document.getElementById("charCount").textContent = `${length} / 300자`;
+  });
+
+  function reportLetter() {
+    if (!currentLetterId) return;
+
+    if (confirm("이 편지를 정말 신고하시겠습니까?")) {
+      fetch(`/letter/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentLetterId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          closePopup();
+        });
+    }
+  }
+
+  window.onload = () => {
+    fetch("/letter/received")
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(letter => {
+          appendLetterToSidebar(letter);
+        });
+      });
+  };
+
+</script>
+</body>
+</html>

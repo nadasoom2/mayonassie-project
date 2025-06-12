@@ -1,0 +1,12 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "emotion",
+            "database": "${workspaceFolder:emotion}/emotion.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true,
+    "liveServer.settings.port": 5501
+}

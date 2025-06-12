@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI와 대화하기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  
+  <style>
+    body {
+      background-color: #fffaf0;
+      font-family: 'Gowun Dodum', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      width: 100%;
+      max-width: 600px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-header {
+      background: linear-gradient(to right, #ffcc80, #ffb74d);
+      color: #5d4037;
+      padding: 20px;
+      font-size: 1.6rem;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #fffef3;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      line-height: 1.5;
+      word-break: break-word;
+      font-size: 1rem;
+    }
+
+    .user {
+      background-color: #ffcc80;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+
+    .ai {
+      background-color: #f5f5f5;
+      color: #333;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 16px;
+      background: #fff;
+      border-top: 1px solid #eee;
+    }
+
+    textarea {
+      flex: 1;
+      font-size: 1rem;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      resize: none;
+      height: 48px;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    button {
+      margin-left: 12px;
+      padding: 0 20px;
+      background: #ffcc80;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Gowun Dodum', sans-serif;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #ffa726;
+    }
+
+    /* 뒤로가기 버튼튼 */
+    .back-circle {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #ffcc80;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: background 0.3s ease;
+    }
+
+    .back-circle:hover {
+      background: #ffa726;
+    } 
+  </style>
+</head>
+<body>
+  <a href="/result" class="back-circle">←</a>
+  <div class="chat-container">
+    <div class="chat-header">AI 감정 대화</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="input-area">
+      <textarea id="userInput" placeholder="마음을 담아 이야기해보세요..."></textarea>
+      <button onclick="sendMessage()">전송</button>
+    </div>
+      <div style="text-align: right; font-size: 0.9rem; color: #999; padding: 0 16px 10px 0;">
+        <span id="charCount">0</span> / 300자
+      </div>
+  </div>
+  <div style="text-align:center; margin: 10px;">
+  <button onclick="goToAutoDiary()" style="background-color:#4caf50;">자동일기 쓰러가기</button>
+</div>
+
+
+  <script>
+    const chatHistory = [];  // 대화 내역 저장
+
+    function appendMessage(sender, text) {
+      const box = document.getElementById("chatBox");
+      const msg = document.createElement("div");
+      msg.className = "message " + (sender === "user" ? "user" : "ai");
+      msg.innerText = text;
+      box.appendChild(msg);
+      box.scrollTop = box.scrollHeight;
+
+      chatHistory.push({ role: sender, message: text });
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage("user", message);
+      input.value = "";
+
+      fetch("/chat_api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message })
+      })
+      .then(res => res.json())
+      .then(data => {
+        appendMessage("ai", data.reply);
+      })
+      .catch(err => {
+        appendMessage("ai", "❌ 오류가 발생했습니다.");
+      });
+    }
+    
+    function goToAutoDiary() {
+      fetch("/save_chat_temp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history: chatHistory })
+      })
+      .then(() => {
+        window.location.href = "/autodiary";
+      })
+      .catch(err => {
+        alert("❌ 대화 이력 전송 실패");
+        console.error(err);
+      });
+    }
+
+
+    // 엔터로 전송 / Shift+Enter는 줄바꿈
+    document.getElementById("userInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // AI가 먼저 말 걸기
+    window.onload = function () {
+      fetch("/chat_api", { method: "GET" })
+        .then(res => res.json())
+        .then(data => {
+          appendMessage("ai", data.reply);
+        })
+        .catch(err => {
+          appendMessage("ai", "❌ AI 초기 메시지를 불러올 수 없습니다.");
+        });
+    };
+
+    const userInput = document.getElementById("userInput");
+    const charCount = document.getElementById("charCount");
+
+    userInput.addEventListener("input", () => {
+      const length = userInput.value.length;
+      charCount.textContent = length;
+
+      if (length > 300) {
+        userInput.value = userInput.value.slice(0, 300);
+        charCount.textContent = 300;
+      }
+    });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>마요네즈 메인</title>
+   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+ 
+  <style>
+    /* 전체 레이아웃웃 */
+    body {
+      background-color: #fffdf4;
+      font-family: 'Gowun Dodum', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #ffb300;
+      font-size: 3rem;
+      margin-top: 40px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      color: #666;
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+    }
+
+    /* 상단 고정바 (코인 + 출석 버튼) */
+    #header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #fff7cc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    #header-bar .greeting {
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    #header-bar .controls {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    /* 메인 버튼 그룹룹 */
+    .button-group {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0 40px;
+    }
+
+    .button-group a button {
+      background-color: #ffcc80;            /* 밝은 오렌지톤 배경 */
+      color: #5d4037;                       /* 진한 갈색 글자색 (가독성 UP) */
+      padding: 14px 30px;                   /* 버튼 내부 여백 */
+      border: none;                         /* 테두리 제거 */
+      border-radius: 30px;                  /* 둥근 모서리 (pill 버튼 느낌) */
+      font-size: 1rem;                      /* 글자 크기 */
+      cursor: pointer;                      /* 마우스 커서 손가락 모양 */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 부드러운 그림자 */
+      transition: transform 0.3s, background-color 0.3s; /* 호버 효과 부드럽게 */
+    }
+
+    .button-group a button:hover {
+      background-color: #ffa726;            /* 호버 시 색 더 진하게 */
+      transform: translateY(-3px);          /* 버튼이 살짝 위로 뜨는 느낌 */
+    }
+
+
+    /* 메인 캘린더 (FullCalendar 영역 ) */
+    #calendar {
+      width: 90%;
+      max-width: 800px;
+      margin-top: 20px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+
+    /* 캘린더 이벤트 모달 */
+    #calendarModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff9ec;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      max-width: 420px;
+      width: 90%;
+      font-size: 0.95rem;
+      text-align: left;
+    }
+
+    #calendarModal h3 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #ff9800;
+    }
+
+    #calendarModal button {
+      margin-top: 20px;
+      background-color: #ffb74d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    #calendarModal button:hover {
+      background-color: #fb8c00;
+    }
+
+    #modalBackdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 999;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 50px;
+      font-size: 0.9rem;
+      color: #aaa;
+      padding-bottom: 30px;
+    }
+
+    /* 출석 체크 팝업 (미니 달력) */
+    #attendance-popup-container {
+      display: none; /* 기본 숨김 */
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1001;
+    }
+
+    .popup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff9e1;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      width: 350px;
+      z-index: 10001;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .calendar-header h2 {
+      color: #b58800;
+      margin: 0;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .day-name, .day {
+      text-align: center;
+      font-size: 14px;
+      padding: 8px 0;
+    }
+    .day-name { font-weight: bold; color: #b58800; }
+    .day { background: #fff3c4; border-radius: 10px; color: #5f4b00; }
+    .today { border: 2px solid #ffcc00; background-color: #fff0b3; font-weight: bold; }
+    .checked { background-color: #ffe58f; color: #4b3c00; font-size: 16px; font-weight: bold; }
+    .attend-button {
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .attend-button button {
+      background-color: #ffd966;
+      color: #5f4b00;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .atd_box {
+      position: fixed;
+      top: 25px;
+      right: 135px; /* 코인바와 겹치지 않도록 여유를 둔 값 */
+      padding: 10px 20px;
+      background: #ffd54f;
+      border: none;
+      border-radius: 12px;
+      color: #4e3c00;
+      font-weight: bold;
+      z-index: 999;
+      cursor: pointer;
+    }
+
+    #coin-bar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #FFD700; /* 진한 노란색 */
+      border-radius: 12px;
+      padding: 8px 14px;
+      color: #222; /* 눈에 잘 띄는 어두운 글자색 */
+      font-weight: bold;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      z-index: 10000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      transition: transform 0.1s ease;
+    }
+
+    #coin-bar:hover {
+      transform: scale(1.03);
+    }
+
+    #coin-bar img {
+      width: 28px;
+      height: 28px;
+    }
+
+  </style>
+
+</head>
+<body>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    fetch("/check_attendance_dates")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("coinCount").textContent = data.coins + "개";
+      })
+      .catch(err => {
+        console.error("코인 정보 불러오기 실패:", err);
+      });
+  });
+  </script>
+
+  <h1>안녕하세요, <span id="username">{{ userid }}</span>님!</h1>
+  <h2>오늘 당신의 마음은 어떤가요?</h2>
+
+  <!-- 출석체크와 보유 코인 -->
+    <div id="coin-bar" onclick="window.location.href='/buy-coins'">
+      <img src="/static/coin.png" alt="코인">
+      <span id="coinCount">{{ coins }}</span>
+    </div>
+
+<button class="atd_box" onclick="openAttendancePopup()">출석체크</button>
+
+
+
+  <!-- FullCalendar -->
+  <div id="calendar"></div>
+
+  <div class="button-group">
+    <a href="/survey"><button>설문 하러 가기</button></a>
+    <a href="/diary"><button>일기 쓰러 가기</button></a>
+    <a href="/letterwriting"><button>편지 쓰러 가기</button></a>
+  </div>
+
+  <!-- 캘린더 모달 박스 -->
+  <div id="calendarModal">
+    <div id="modalContent">내용을 불러오는 중...</div>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+  <div id="modalBackdrop" onclick="closeModal()"></div>
+
+  <!-- 출석체크 팝업 body -->
+  <div id="attendance-popup-container" style="display: none;">
+    <div class="popup">
+      <div class="calendar-header">
+        <button onclick="changeMonth(-1)">◀</button>
+        <h2 id="month-title">월</h2>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+      <div class="calendar" id="attendance-calendar"></div>
+      <div class="attend-button">
+        <button class="attend" onclick="markAttendance()">출석하기</button>
+        <button onclick="closeAttendancePopup()" style="background-color:#eee; color:#555;">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    010@naver.com - 문제 있을 시 메일 남겨주세요!
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  
+  <script>
+    // 캘린더 이벤트 모달 관련 함수
+    function closeModal() {
+      document.getElementById("calendarModal").style.display = "none";
+      document.getElementById("modalBackdrop").style.display = "none";
+    }
+
+    // 페이지 로딩 시 캘린더(FullCalendar) 랜더링 
+    document.addEventListener('DOMContentLoaded', function () {
+      // 메인 FullCalendar (일기/설문용)
+      const calendarEl = document.getElementById('calendar');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        height: 'auto',
+        contentHeight: 'auto',
+        fixedWeekCount: false,
+        contentHeight: 400,
+
+        // 이벤트 가져오기 (설문/일기)
+        events: async function(fetchInfo, successCallback, failureCallback) {
+          try {
+            const res = await fetch(`/calendar/calendar-diary-range?start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`);
+            const data = await res.json();
+            const events = data.map(d => ({
+              title: '📘',
+              start: d.date,
+              allDay: true
+            }));
+            successCallback(events);
+          } catch (err) {
+            failureCallback(err);
+          }
+        },
+        
+        // 날짜 클릭 시 모달 열기
+        dateClick: function (info) {
+          fetch(`/calendar/calendar-data?date=${info.dateStr}`)
+            .then(res => res.json())
+            .then(data => {
+              const html = `
+                <strong>📅 ${info.dateStr}</strong><br/><br/>
+                🧠 <strong>설문 메모:</strong><br/>
+                <div style="margin-left:10px; margin-bottom:10px;">${data.memo || "없음"}</div>
+                📓 <strong>일기 내용:</strong><br/>
+                <div style="margin-left:10px;">${data.diary ? data.diary.slice(0, 100) + "..." : "없음"}</div><br/>
+                <a href="/diary?date=${info.dateStr}"><button>일기 자세히 보기</button></a>
+              `;
+              document.getElementById("modalContent").innerHTML = html;
+              document.getElementById("calendarModal").style.display = "block";
+              document.getElementById("modalBackdrop").style.display = "block";
+            });
+        }
+      });
+      calendar.render();
+
+      // 출석 체크용 미니 달력 호출
+      maybeShowAttendancePopupOncePerDay();  // 자동 출석 팝업
+    });
+
+    //출석 체크 용 미니 달력 로직직
+    let currentDate = new Date();
+    let attendanceDates  = []; 
+
+    // 출석체크 - 주어진 날짜 형식 변환
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    // 출석 달력 - 달력 그리기 (각 날짜에 체크여부)
+    function generateCalendar(date) {
+      const calendar = document.getElementById("attendance-calendar");
+      const monthTitle = document.getElementById("month-title");
+      calendar.innerHTML = "";
+
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const today = new Date();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const startDay = firstDay.getDay();
+
+      // 요일 이름 추가가
+      const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+      dayNames.forEach(day => {
+        const div = document.createElement("div");
+        div.className = "day-name";
+        div.textContent = day;
+        calendar.appendChild(div);
+      });
+
+      // 빈 칸 채우기
+      for (let i = 0; i < startDay; i++) {
+        calendar.appendChild(document.createElement("div"));
+      }
+
+      // 날짜별 셀 추가가
+      for (let d = 1; d <= lastDate; d++) {
+        const cell = document.createElement("div");
+        const thisDate = new Date(year, month, d);
+        const dateStr = formatDate(thisDate);
+        cell.className = "day";
+
+        // 이미 출석한 날짜라면 체크 표시
+        if (attendanceDates.includes(dateStr)) {
+          cell.classList.add("checked");
+          cell.textContent = "✔";
+        } else {
+          cell.textContent = d;
+        }
+
+        // 오늘 날짜 스타일 강조
+        if (
+          d === today.getDate() &&
+          month === today.getMonth() &&
+          year === today.getFullYear()
+        ) {
+          cell.classList.add("today");
+        }
+
+        calendar.appendChild(cell)
+      }
+
+      monthTitle.textContent = `${month + 1}월`;
+    }
+
+    // 연속 출석일 계산 함수
+    function getConsecutiveAttendanceDays(attendanceList) {
+      // attendanceList는 'YYYY-MM-DD' 문자열 배열, 정렬 필요
+      attendanceList.sort();
+      let count = 1; // 오늘 출석 포함 가정
+
+      for (let i = attendanceList.length - 1; i > 0; i--) {
+        const current = new Date(attendanceList[i]);
+        const prev = new Date(attendanceList[i - 1]);
+        const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
+        if (diffDays === 1) {
+          count++;
+        } else if (diffDays > 1) {
+          break;  // 연속 끊김
+        }
+      }
+      return count;
+    }
+
+    // 이전/다음 달로 이동
+    function changeMonth(diff) {
+      currentDate.setMonth(currentDate.getMonth() + diff);
+      generateCalendar(currentDate);
+    }
+
+    // 출석 체크 버튼 클릭 시 
+    function markAttendance() {
+      const todayStr = formatDate(new Date());
+
+      // 이미 출석한 날이면 중복 방지
+      if (attendanceDates.includes(todayStr)) {
+        alert("이미 출석했어요!");
+        return;
+      }
+
+      // 서버에 출석 기록 저장
+      fetch("/check_attendance", {
+        method: "POST",
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            // 1. 오늘 날짜 출석 목록에 추가
+            attendanceDates.push(todayStr);
+            localStorage.setItem(`attendance_${userId}`, JSON.stringify(attendanceDates));
+
+            // 2. 연속 출석일 계산
+            const streak = getConsecutiveAttendanceDays(attendanceDates);
+            const daysLeft = 5 - streak;
+
+            if (daysLeft > 0) {
+              alert(`출석 완료! 코인 획득까지 앞으로 ${daysLeft}일`);
+            } else {
+              alert("축하합니다! 연속 5일 출석으로 보상을 받을 수 있어요!");
+            }
+
+            // 3. 코인 수 UI 업데이트
+            document.getElementById('coinCount').textContent = data.coins;
+
+            // 4. 캘린더 갱신
+            generateCalendar(currentDate);
+          } else {
+            alert("출석 처리 실패: " + (data.error || "알 수 없는 오류"));
+          }
+        })
+        .catch(err => {
+          console.error("출석 처리 중 오류:", err);
+          alert("서버 오류가 발생했습니다.");
+        });
+    }
+
+
+    // 출석체크 -팝업 열기 - DB에서 출석 날짜와 coins 가져옴
+    function openAttendancePopup(isAuto = false) {
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      // ✅ 자동 호출인데 오늘 이미 자동 팝업 띄웠다면 무시
+      if (isAuto && localStorage.getItem(`popupShown_${userId}_${todayStr}`) === "true") {
+        console.log("⛔ 이미 오늘 자동 팝업 띄웠음. 무시함.");
+        return;
+      }
+
+      // ✅ 서버에서 출석 날짜 + 코인 수 받아오기
+      fetch("/check_attendance_dates")
+        .then(res => res.json())
+        .then(data => {
+          attendanceDates = data.dates || [];
+          document.getElementById("coinCount").textContent = data.coins;
+          generateCalendar(currentDate);
+          document.getElementById("attendance-popup-container").style.display = "block";
+
+          // ✅ 자동 호출이면 오늘 날짜에 해당하는 localStorage 플래그 저장
+          if (isAuto) {
+            localStorage.setItem(`popupShown_${userId}_${todayStr}`, "true");
+          }
+        })
+        .catch(err => {
+          console.error("출석 날짜/코인 가져오기 오류:", err);
+        });
+    }
+
+
+
+  // 출석체크 - 팝업 끔
+    function closeAttendancePopup() {
+      document.getElementById("attendance-popup-container").style.display = "none";
+    }
+
+    // 오늘 날짜 형식 반환
+    function getTodayDateStr() {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    }
+
+    function maybeShowAttendancePopupOncePerDay() {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const key = `popupShown_${userId}_${todayStr}`;
+      if (!localStorage.getItem(key)) {
+        openAttendancePopup(true);
+      }
+    }
+
+    // 백엔드에서 받은 userid가 없을 경우 fallback 처리
+    const userIdFromServer = "{{ userid }}";
+
+    // undefined or 빈 문자열이면 localStorage fallback
+    const userId = (userIdFromServer && userIdFromServer !== "None") ? userIdFromServer : (localStorage.getItem("userId") || "guest");
+
+    // username 표시
+    document.addEventListener('DOMContentLoaded', () => {
+      const usernameEl = document.getElementById("username");
+      if (usernameEl) {
+        usernameEl.textContent = userId;
+      }
+
+      // 로컬스토리지 갱신
+      if (userIdFromServer && userIdFromServer !== "None") {
+        localStorage.setItem("userId", userIdFromServer);
+      }
+    });
+  </script>
+</body>
+</html>

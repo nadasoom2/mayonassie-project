@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>받은 편지 보기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: 'Gowun Dodum', sans-serif;
+      background-color: #fffef8;
+      color: #333;
+    }
+
+    .letter-view {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff8e1;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .sender-info {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 10px;
+    }
+
+    .emotion-tag {
+      display: inline-block;
+      background-color: #ffd54f;
+      color: #5d4037;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+
+    .letter-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin: 10px 0 20px;
+    }
+
+    .letter-content {
+      font-size: 16px;
+      line-height: 1.7;
+      white-space: pre-line;
+    }
+
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .actions button {
+      background-color: #ffa000;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-size: 14px;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    .actions button:hover {
+      background-color: #fb8c00;
+    }
+
+    .report-btn {
+      background-color: #ef5350;
+    }
+
+    .report-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+<div class="letter-view">
+  <div class="sender-info">
+    익명 닉네임: <strong>속삭이는 달팽이</strong>  
+    <span class="emotion-tag">😔 외로움</span>
+  </div>
+
+  <div class="letter-title">요즘 마음이 조금 헛헛해요</div>
+
+  <div class="letter-content">
+    혼자 있는 시간이 많아지면서,
+    문득문득 말 한마디가 그리운 순간이 많아요.
+    누군가의 한 줄, 한 마디가 큰 힘이 되곤 하죠.
+    오늘도 이 편지가 누군가에게 따뜻한 온기가 되었으면 합니다.
+  </div>
+
+  <div class="actions">
+    <button class="report-btn" onclick="reportLetter()">🚩 신고하기</button>
+  </div>
+</div>
+
+<script>
+
+  function reportLetter() {
+    const reason = prompt("🚩 신고 사유를 입력해주세요 (예: 불쾌함, 광고 등)");
+    if (!reason) return;
+
+    if (confirm("정말 이 편지를 신고하시겠습니까?")) {
+      // 서버 전송 예시
+      // fetch('/report', { method: 'POST', body: JSON.stringify({ letterId: '1234', reason }) })
+
+      alert("신고가 접수되었습니다. 감사합니다.");
+    }
+  }
+</script>
+
+</body>
+</html>
+
+<script>
+  // 쿼리스트링에서 id 파라미터 추출
+  const params = new URLSearchParams(window.location.search);
+  const letterId = params.get('id');
+
+  // DB에서 편지 내용 불러오기
+  if (letterId) {
+    fetch(`/letter?id=${letterId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert("편지를 불러오는 데 실패했습니다.");
+          return;
+        }
+
+        // HTML 요소에 반영
+        document.querySelector('.emotion-tag').textContent = data.emotion;
+        document.querySelector('.letter-title').textContent = data.title;
+        document.querySelector('.letter-content').textContent = data.content;
+      })
+      .catch(err => {
+        console.error("편지 로딩 오류:", err);
+        alert("편지를 불러오는 중 오류가 발생했습니다.");
+      });
+  }
+</script>

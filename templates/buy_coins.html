@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>코인 구매</title>
+    <script src="https://js.tosspayments.com/v1/payment"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #fffbe6;
+            font-family: 'Gowun Dodum', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .coin-subscription-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            max-width: 900px;
+            margin: 100px auto 40px auto;
+            padding: 0 20px;
+        }
+
+        .coin-section, .subscription-section {
+            background: #fff7cc;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 45%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .coin-item {
+            margin-bottom: 25px;
+        }
+
+        .coin-item img {
+            width: 60px;
+            margin-bottom: 10px;
+        }
+
+        .price-old {
+            text-decoration: line-through;
+            color: gray;
+            margin: 0;
+        }
+
+        .price-new {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 5px 0 12px 0;
+            color: #a67900;
+        }
+
+        /* ✅ 월 구독 박스 스타일 */
+        .subscription-section {
+            background: #fff1b8;
+            border: 2px solid #d4b106;
+            color: #6b5700;
+            box-shadow: 0 6px 15px rgba(212, 177, 6, 0.3);
+
+            /* 중앙 정렬을 위한 Flex 설정 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            /* 높이 제한이 없다면 세로 정렬 안될 수 있으므로 최소 높이 추가 */
+            min-height: 360px;
+        }
+
+        .subscription-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .subscription-item h3 {
+            margin-top: 0;
+            font-size: 26px;
+            text-align: center;
+        }
+
+        .subscription-item p {
+            margin: 8px 0;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .subscription-item button {
+            margin-top: 15px;
+            padding: 12px 28px;
+            font-weight: bold;
+            background-color: #d4b106;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 18px;
+            font-family: 'Gowun Dodum', sans-serif;
+        }
+
+        .subscription-item button:hover {
+            background-color: #f0d92d;
+        }
+
+        /* .back-button {
+            display: inline-block;
+            margin: 0 auto 40px auto;
+            padding: 10px 20px;
+            background-color: #ffe680;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #5e4b00;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: center;
+        } */
+
+        .back-circle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #ffe680;
+            color: #fff;/*5e4b00*/
+            width: 40px;
+            height: 40px; 
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #ffeb99;
+        }
+
+    </style>
+</head>
+<body>
+<a href="/home" class="back-circle">←</a>
+<div class="coin-subscription-wrapper">
+    <div class="coin-section">
+        <h2>코인 구매</h2>
+
+        <div class="coin-item">
+            <img src="{{ url_for('static', filename='static/coin.png') }}" alt="coin">
+            <p>1코인</p>
+            <p class="price-new">300원</p>
+            <button onclick="requestTossPay(1, 300)">구매</button>
+        </div>
+        <div class="coin-item">
+            <img src="{{ url_for('static', filename='static/coin.png') }}" alt="coin">
+            <p>5코인</p>
+            <p class="price-old">1,500원</p>
+            <p class="price-new">1,000원</p>
+            <button onclick="requestTossPay(5, 1000)">구매</button>
+        </div>
+        <div class="coin-item">
+            <img src="{{ url_for('static', filename='static/coin.png') }}" alt="coin">
+            <p>10코인</p>
+            <p class="price-old">3,000원</p>
+            <p class="price-new">1,500원</p>
+            <button onclick="requestTossPay(10, 1500)">구매</button>
+        </div>
+    </div>
+
+    <div class="subscription-section">
+        <h2>월 구독 서비스</h2>
+        <div class="subscription-item">
+            <h3>월 6,900원</h3>
+            <p>편지 읽기 하루 5회 무료</p>
+            <p>자동 AI 일기 생성 무료 제공</p>
+            <button onclick="requestTossPay('subscription', 9900)">구독하기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function requestTossPay(coinCountOrType, amount) {
+        const tossPayments = TossPayments("test_ck_kYG57Eba3GYBAAodYv4QrpWDOxmA"); // 테스트 클라이언트 키 입력
+
+        const orderId = 'order_' + new Date().getTime(); // 고유 주문번호 생성
+        const orderName = coinCountOrType === 'subscription' ? '월 구독 서비스' : `${coinCountOrType}코인`;
+
+        tossPayments.requestPayment('카드', {
+            amount: amount,
+            orderId: orderId,
+            orderName: orderName,
+            customerName: "김수미",
+            successUrl: window.location.origin + '/payment-success',
+            failUrl: window.location.origin + '/payment-fail'
+        });
+    }
+
+// 
+</script>
+
+</body>
+</html>

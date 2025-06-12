@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>마요네즈 로그인</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet" />
+  
+  <style>
+    body {
+      background-color: #fff8e1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    h1 {
+      color: #ffb300;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    .form-box {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 300px;
+      text-align: center;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #ffcc80;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      color: white;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.3s;
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+
+    
+
+    button:hover {
+      background-color: #ffa726;
+    }
+
+    .link {
+      margin-top: 15px;
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 10px;
+      font-size: 0.9rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="font-size: 3rem; color: #ffb300; margin-bottom: 10px; font-weight: bold;">
+    마요네즈
+  </h1>
+  <h2 style="font-size: 1.2rem; color: #555; margin-top: 0; margin-bottom: 25px;">
+    내 마음을 알려줘요 
+  </h2>
+  <div class="form-box">
+    <form method="POST" action="/login" onsubmit="return login()">
+      <!--여기 한줄  고침-->
+      <input type="text" id="phone" name="phone" placeholder="휴대폰번호를 입력해주세요" />
+      <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" />
+      <button type="submit">로그인</button>
+    </form>    
+    <div class="link">
+      아직 계정이 없으신가요? <a href="/signup">회원가입</a>
+    </div>
+  </div>
+  <div class="footer">
+    010@naver.com - 문제 있을 시 메일 남겨주세요!
+  </div>
+
+  <script>
+    function login() {
+      // 여기 한줄 고침침
+      const id = document.getElementById('phone').value;
+      const pw = document.getElementById('password').value;
+
+      if (!id) {
+        alert("휴대폰번호를 입력해주세요");
+        return false;  // form 제출 막기
+      }
+
+      if (!pw) {
+        alert("비밀번호를 입력해주세요");
+        return false;
+      }
+
+      // ✅ 유효성 검사를 통과하면 폼 제출 허용
+      return true;
+    }
+
+  </script>
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <script>
+      alert("{{ messages[0] }}");
+    </script>
+  {% endif %}
+{% endwith %}
+
+</body>
+</html>
+
