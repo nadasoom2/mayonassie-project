@@ -86,7 +86,7 @@ def analyze_emotions_with_gpt(survey_row, column_names):
     # GPT 호출
     try:
         import openai
-        response = openai.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
