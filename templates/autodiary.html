@@ -269,6 +269,8 @@
 
 
     function generateDiary() {
+      appendMessage('ai', '✍️ 일기를 정리하는 중이야... 조금만 기다려줘!');
+
       fetch('/generate_autodiary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
